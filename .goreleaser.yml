@@ -27,6 +27,8 @@ archives:
     format_overrides:
       - goos: windows
         format: zip
+release:
+  prerelease: auto
 checksum:
   name_template: 'checksums.txt'
 snapshot:
@@ -44,22 +46,22 @@ dockers:
     image_templates:
     - "ghcr.io/kushsharma/optimus-task-neo-executer:latest"
     - "ghcr.io/kushsharma/optimus-task-neo-executer:{{ .Tag }}"
-    skip_push: false
-    dockerfile: ./task/neo/example.Dockerfile
+    dockerfile: ./task/neo/executer/Dockerfile
+    extra_files:
+    - task/neo/executer
 
   # optional
-  -
-    goos: linux
-    goarch: amd64
-    image_templates:
-    - "ghcr.io/kushsharma/optimus-task-neo:latest"
-    - "ghcr.io/kushsharma/optimus-task-neo:{{ .Tag }}"
-    skip_push: false
-    dockerfile: ./task/neo/example.Dockerfile
-    extra_files:
-    - task/neo/example.entrypoint.sh
-    build_flag_templates:
-    - "--build-arg=OPTIMUS_RELEASE_URL=https://github.com/odpf/optimus/releases/download/v0.0.1-rc.2/optimus_0.0.1-rc.2_linux_x86_64.tar.gz"
+  # -
+  #   goos: linux
+  #   goarch: amd64
+  #   image_templates:
+  #   - "ghcr.io/kushsharma/optimus-task-neo:latest"
+  #   - "ghcr.io/kushsharma/optimus-task-neo:{{ .Tag }}"
+  #   dockerfile: ./task/neo/example.Dockerfile
+  #   extra_files:
+  #   - task/neo/example.entrypoint.sh
+  #   build_flag_templates:
+  #   - "--build-arg=OPTIMUS_RELEASE_URL=https://github.com/odpf/optimus/releases/download/v0.0.1-rc.2/optimus_0.0.1-rc.2_linux_x86_64.tar.gz"
 
 brews:
   - name: optimus-plugins

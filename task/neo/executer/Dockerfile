@@ -6,7 +6,7 @@ RUN mkdir -p /opt
 WORKDIR /opt
 
 # copy the content of the local src directory to the working directory
-COPY . .
+COPY task/neo/executer .
 
 # install dependencies
 RUN pip install -r requirements.txt
