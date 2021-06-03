@@ -64,12 +64,14 @@ dockers:
   #   - "--build-arg=OPTIMUS_RELEASE_URL=https://github.com/odpf/optimus/releases/download/v0.0.1-rc.2/optimus_0.0.1-rc.2_linux_x86_64.tar.gz"
 
 brews:
-  - name: optimus-plugins
+  - name: optimus-plugins-kush
+    install: |
+      bin.install Dir["optimus-*"]
     tap:
       owner: kushsharma
       name: homebrew-taps
     license: "Apache 2.0"
-    description: "Optimus Near earth orbit tracker"
+    description: "Optimus plugins - [Optimus Near earth orbit tracker]"
     commit_author:
       name: Kush Sharma
       email: 3647166+kushsharma@users.noreply.github.com

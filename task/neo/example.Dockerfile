@@ -1,7 +1,7 @@
 # optional
 # --------
 
-FROM docker.io/cosmopod/optimus-task-neo-executor:latest
+FROM cosmopod/optimus-task-neo-executor:latest
 
 # path to optimus release tar.gz
 ARG OPTIMUS_RELEASE_URL
