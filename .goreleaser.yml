@@ -1,0 +1,73 @@
+
+before:
+  hooks:
+    - make test
+builds:
+  - dir: ./task/neo
+    main: .
+    id: "neo"
+    binary: "optimus-task-neo_{{.Version}}_{{.Os}}_{{.Arch}}"
+    ldflags:
+      - -s -w -X main.build={{.Version}}
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    env:
+      - CGO_ENABLED=0
+archives:
+  - replacements:
+      darwin: darwin
+      linux: linux
+      windows: windows
+      amd64: amd64
+    format_overrides:
+      - goos: windows
+        format: zip
+checksum:
+  name_template: 'checksums.txt'
+snapshot:
+  name_template: "{{ .Tag }}-next"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+dockers:
+  -
+    goos: linux
+    goarch: amd64
+    image_templates:
+    - "ghcr.io/kushsharma/optimus-task-neo-executer:latest"
+    - "ghcr.io/kushsharma/optimus-task-neo-executer:{{ .Tag }}"
+    skip_push: false
+    dockerfile: ./task/neo/example.Dockerfile
+
+  # optional
+  -
+    goos: linux
+    goarch: amd64
+    image_templates:
+    - "ghcr.io/kushsharma/optimus-task-neo:latest"
+    - "ghcr.io/kushsharma/optimus-task-neo:{{ .Tag }}"
+    skip_push: false
+    dockerfile: ./task/neo/example.Dockerfile
+    extra_files:
+    - task/neo/example.entrypoint.sh
+    build_flag_templates:
+    - "--build-arg=OPTIMUS_RELEASE_URL=https://github.com/odpf/optimus/releases/download/v0.0.1-rc.2/optimus_0.0.1-rc.2_linux_x86_64.tar.gz"
+
+brews:
+  - name: optimus-plugins
+    tap:
+      owner: kushsharma
+      name: homebrew-taps
+    license: "Apache 2.0"
+    description: "Optimus Near earth orbit tracker"
+    commit_author:
+      name: Kush Sharma
+      email: 3647166+kushsharma@users.noreply.github.com

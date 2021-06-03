@@ -1,0 +1,42 @@
+name: build
+
+on:
+  push:
+    branches:
+      - master
+      - main
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: '1.16'
+      - name: test binaries
+        run: make test
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: '1.16'
+      - name: Run GoReleaser for branch
+        uses: goreleaser/goreleaser-action@v2.6.1
+        if: startsWith(github.ref, 'refs/heads/master')
+        with:
+          distribution: goreleaser
+          version: latest
+          args: --snapshot --rm-dist
