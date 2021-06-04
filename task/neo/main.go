@@ -18,6 +18,7 @@ var (
 	Name           = "neo"
 	DatetimeFormat = "2006-01-02"
 	Version        = "latest"
+	Image          = "ghcr.io/kushsharma/optimus-task-neo-executer"
 )
 
 type Neo struct{}
@@ -29,7 +30,7 @@ func (n *Neo) GetTaskSchema(ctx context.Context, req models.GetTaskSchemaRequest
 		Description: "Near earth object tracker",
 
 		// docker image that will be executed as the actual transformation task
-		Image:      fmt.Sprintf("%s:%s", "docker.io/cosmopod/optimus-task-neo-executor", Version),
+		Image:      fmt.Sprintf("%s:%s", Image, Version),
 		SecretPath: "/tmp/key.json",
 	}, nil
 }

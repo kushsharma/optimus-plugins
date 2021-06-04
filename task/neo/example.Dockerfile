@@ -1,7 +1,7 @@
 # optional
 # --------
 
-FROM cosmopod/optimus-task-neo-executor:latest
+FROM ghcr.io/kushsharma/optimus-task-neo-executer:latest
 
 # path to optimus release tar.gz
 ARG OPTIMUS_RELEASE_URL
