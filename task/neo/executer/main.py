@@ -21,6 +21,7 @@ def start():
                      params={'start_date': range_start, 'end_date': range_end, 'api_key': API_KEY})
 
     # extracting data in json format
+    print("for date range {} - {}".format(range_start, range_end))
     print_details(r.json())
 
     # TODO

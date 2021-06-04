@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/odpf/optimus/plugin"
 
@@ -64,8 +63,11 @@ func (n *Neo) ValidateTaskQuestion(ctx context.Context, req models.ValidateTaskQ
 			if !ok || d == "" {
 				return errors.New("not a valid string")
 			}
-			_, err := time.Parse(time.RFC3339, d)
-			return err
+			// can choose to parse here for a valid date but we will use optimus
+			// macros here instead of actual dates
+			// _, err := time.Parse(time.RFC3339, d)
+			// return err
+			return nil
 		}(req.Answer.Value)
 	case "End":
 		err = func(ans interface{}) error {
@@ -73,8 +75,11 @@ func (n *Neo) ValidateTaskQuestion(ctx context.Context, req models.ValidateTaskQ
 			if !ok || d == "" {
 				return errors.New("not a valid string")
 			}
-			_, err := time.Parse(time.RFC3339, d)
-			return err
+			// can choose to parse here for a valid date but we will use optimus
+			// macros here instead of actual dates
+			// _, err := time.Parse(time.RFC3339, d)
+			// return err
+			return nil
 		}(req.Answer.Value)
 	}
 	if err != nil {
