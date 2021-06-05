@@ -3,33 +3,72 @@ import requests
 import json
 from image_to_ascii import ImageToAscii
 
-API_KEY = ""
+# path where secret will be mounted in docker container
 SECRET_PATH = "/tmp/key.json"
 
 
 def start():
-    opt_config = fetch_optimus()
-    # range_start = os.environ["RANGE_START"]
-    # range_end = os.environ["RANGE_END"]
+    """
+    Sends a http call to nasa api, parses response and prints potential hazardous
+    objects in near earth orbit
+    :return:
+    """
+    opt_config = fetch_config_from_optimus()
 
-    with open(SECRET_PATH, "r") as f:
-        API_KEY = json.load(f)['key']
+    # user configuration for date range
     range_start = opt_config["envs"]["RANGE_START"]
     range_end = opt_config["envs"]["RANGE_END"]
 
+    # secret token required for NASA API being fetched from a file mounted as
+    # volume by optimus executor
+    with open(SECRET_PATH, "r") as f:
+        api_key = json.load(f)['key']
+    if api_key is None:
+        raise Exception("invalid api token")
+
+    # send the request for given date range
     r = requests.get(url="https://api.nasa.gov/neo/rest/v1/feed",
-                     params={'start_date': range_start, 'end_date': range_end, 'api_key': API_KEY})
+                     params={'start_date': range_start, 'end_date': range_end, 'api_key': api_key})
 
     # extracting data in json format
     print("for date range {} - {}".format(range_start, range_end))
     print_details(r.json())
 
-    # TODO
-    # print_image(range_start)
     return
 
 
+def fetch_config_from_optimus():
+    """
+    Fetch configuration inputs required to run this task for a single schedule day
+    Configurations are fetched using optimus rest api
+    :return:
+    """
+    # try printing os env to see what all we have for debugging
+    # print(os.environ)
+
+    # prepare request
+    optimus_host = os.environ["OPTIMUS_HOSTNAME"]
+    scheduled_at = os.environ["SCHEDULED_AT"]
+    project_name = os.environ["PROJECT"]
+    job_name = os.environ["JOB_NAME"]
+
+    r = requests.post(url="http://{}/api/v1/project/{}/job/{}/instance".format(optimus_host, project_name, job_name),
+                      json={'scheduled_at': scheduled_at,
+                            'instance_name': "neo",
+                            'instance_type': "TASK"})
+    instance = r.json()
+
+    # print(instance)
+    return instance["context"]
+
+
 def print_details(jd):
+    """
+    Parse and calculate what we need from NASA endpoint response
+
+    :param jd: json data fetched from NASA API
+    :return:
+    """
     element_count = jd['element_count']
     potentially_hazardous = []
     for search_date in jd['near_earth_objects'].keys():
@@ -51,7 +90,19 @@ def print_details(jd):
     return
 
 
+if __name__ == "__main__":
+    start()
+
+
 def print_image(range_start):
+    """
+    print image in ascii
+
+    BROKEN AT THE MOMENT, SOMEONE FIX ME PLEASE
+    :param range_start:
+    :return:
+    """
+
     range_parts = range_start.split("-")
 
     # get json for all images of this date
@@ -76,20 +127,3 @@ def print_image(range_start):
     with open("earth.txt", "r") as earthFD:
         print(earthFD.read())
     return
-
-
-def fetch_optimus():
-    # print(os.environ)
-    optimus_host = os.environ["OPTIMUS_HOSTNAME"]
-    scheduled_at = os.environ["SCHEDULED_AT"]
-    project_name = os.environ["PROJECT"]
-    job_name = os.environ["JOB_NAME"]
-    r = requests.post(url="http://{}/api/v1/project/{}/job/{}/instance".format(optimus_host, project_name, job_name),
-                      json={'scheduled_at': scheduled_at, 'instance_name': "neo", 'instance_type': "TASK"})
-    instance = r.json()
-    # print(instance)
-    return instance["context"]
-
-
-if __name__ == "__main__":
-    start()

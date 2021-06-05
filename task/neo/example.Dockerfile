@@ -1,7 +1,7 @@
 # optional
 # --------
 
-FROM ghcr.io/kushsharma/optimus-task-neo-executer:latest
+FROM ghcr.io/kushsharma/optimus-task-neo-executor:latest
 
 # path to optimus release tar.gz
 ARG OPTIMUS_RELEASE_URL

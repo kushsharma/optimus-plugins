@@ -16,25 +16,30 @@ import (
 var (
 	Name           = "neo"
 	DatetimeFormat = "2006-01-02"
-	Version        = "latest"
-	Image          = "ghcr.io/kushsharma/optimus-task-neo-executer"
+
+	// will be injected by build system
+	Version = "latest"
+	Image   = "ghcr.io/kushsharma/optimus-task-neo-executor"
 )
 
 type Neo struct{}
 
-// basic task details
+// GetTaskSchema provides basic task details
 func (n *Neo) GetTaskSchema(ctx context.Context, req models.GetTaskSchemaRequest) (models.GetTaskSchemaResponse, error) {
 	return models.GetTaskSchemaResponse{
 		Name:        Name,
 		Description: "Near earth object tracker",
 
 		// docker image that will be executed as the actual transformation task
-		Image:      fmt.Sprintf("%s:%s", Image, Version),
+		Image: fmt.Sprintf("%s:%s", Image, Version),
+
+		// this is where the secret required by docker container will be mounted
 		SecretPath: "/tmp/key.json",
 	}, nil
 }
 
-// will be asked via opctl
+// GetTaskQuestions provides questions asked via optimus cli when a new job spec
+// is requested to be created
 func (n *Neo) GetTaskQuestions(ctx context.Context, req models.GetTaskQuestionsRequest) (models.GetTaskQuestionsResponse, error) {
 	tQues := []models.PluginQuestion{
 		{
@@ -53,7 +58,8 @@ func (n *Neo) GetTaskQuestions(ctx context.Context, req models.GetTaskQuestionsR
 	}, nil
 }
 
-// validate how stupid user is
+// ValidateTaskQuestion validate how stupid user is
+// Each question config in GetTaskQuestions will send a validation request
 func (n *Neo) ValidateTaskQuestion(ctx context.Context, req models.ValidateTaskQuestionRequest) (models.ValidateTaskQuestionResponse, error) {
 	var err error
 	switch req.Answer.Question.Name {
@@ -64,7 +70,7 @@ func (n *Neo) ValidateTaskQuestion(ctx context.Context, req models.ValidateTaskQ
 				return errors.New("not a valid string")
 			}
 			// can choose to parse here for a valid date but we will use optimus
-			// macros here instead of actual dates
+			// macros here {{.DSTART}} instead of actual dates
 			// _, err := time.Parse(time.RFC3339, d)
 			// return err
 			return nil
@@ -76,7 +82,7 @@ func (n *Neo) ValidateTaskQuestion(ctx context.Context, req models.ValidateTaskQ
 				return errors.New("not a valid string")
 			}
 			// can choose to parse here for a valid date but we will use optimus
-			// macros here instead of actual dates
+			// macros here {{.DEND}} instead of actual dates
 			// _, err := time.Parse(time.RFC3339, d)
 			// return err
 			return nil
@@ -102,7 +108,9 @@ func findAnswerByName(name string, answers []models.PluginAnswer) (models.Plugin
 	return models.PluginAnswer{}, false
 }
 
-// configs we will need from users
+// DefaultTaskConfig are a set of key value pair which will be embedded in job
+// specification. These configs can be requested by the docker container before
+// execution
 func (n *Neo) DefaultTaskConfig(ctx context.Context, request models.DefaultTaskConfigRequest) (models.DefaultTaskConfigResponse, error) {
 	start, _ := findAnswerByName("Start", request.Answers)
 	end, _ := findAnswerByName("End", request.Answers)
@@ -122,19 +130,21 @@ func (n *Neo) DefaultTaskConfig(ctx context.Context, request models.DefaultTaskC
 	}, nil
 }
 
-// none
+// DefaultTaskAssets are a set of files which will be embedded in job
+// specification in assets folder. These configs can be requested by the
+// docker container before execution.
 func (n *Neo) DefaultTaskAssets(ctx context.Context, _ models.DefaultTaskAssetsRequest) (models.DefaultTaskAssetsResponse, error) {
 	return models.DefaultTaskAssetsResponse{}, nil
 }
 
-// passthrough
+// override the compilation behaviour of assets - if needed
 func (n *Neo) CompileTaskAssets(ctx context.Context, req models.CompileTaskAssetsRequest) (models.CompileTaskAssetsResponse, error) {
 	return models.CompileTaskAssetsResponse{
 		Assets: req.Assets,
 	}, nil
 }
 
-// a task should always have a destination, it could be endpoint, table, bucket, etc
+// a task should ideally always have a destination, it could be endpoint, table, bucket, etc
 // in our case it is actually nothing
 func (n *Neo) GenerateTaskDestination(ctx context.Context, request models.GenerateTaskDestinationRequest) (models.GenerateTaskDestinationResponse, error) {
 	return models.GenerateTaskDestinationResponse{
@@ -150,17 +160,26 @@ func (n *Neo) GenerateTaskDependencies(ctx context.Context, request models.Gener
 func main() {
 	neo := &Neo{}
 
-	var handshakeConfig = hplugin.HandshakeConfig{
-		ProtocolVersion:  1,
-		MagicCookieKey:   plugin.MagicCookieKey,
-		MagicCookieValue: plugin.MagicCookieValue,
-	}
+	// start serving the plugin on a unix socket as a grpc server
 	hplugin.Serve(&hplugin.ServeConfig{
-		HandshakeConfig: handshakeConfig,
+
+		// this will be printed on stdout and will be piped to optimus core
+		HandshakeConfig: hplugin.HandshakeConfig{
+			// Need to be set as needed
+			ProtocolVersion: 1,
+
+			// Magic cookie key and value are just there to make sure you want to connect
+			// with optimus core, this is not authentication
+			MagicCookieKey:   plugin.MagicCookieKey,
+			MagicCookieValue: plugin.MagicCookieValue,
+		},
+
+		// what are we serving on grpc
 		Plugins: map[string]hplugin.Plugin{
 			plugin.TaskPluginName: &task.Plugin{Impl: neo},
 		},
-		// A non-nil value here enables gRPC serving for this plugin...
+
+		// default grpc server
 		GRPCServer: hplugin.DefaultGRPCServer,
 	})
 }

@@ -8,7 +8,7 @@ builds:
     id: "neo"
     binary: "optimus-task-neo_{{.Version}}_{{.Os}}_{{.Arch}}"
     ldflags:
-      - -s -w -X main.Version={{.Version}} -X main.Image=ghcr.io/kushsharma/optimus-task-neo-executer
+      - -s -w -X main.Version={{.Version}} -X main.Image=ghcr.io/kushsharma/optimus-task-neo-executor
     goos:
       - linux
       - darwin
@@ -44,24 +44,24 @@ dockers:
     goos: linux
     goarch: amd64
     image_templates:
-    - "ghcr.io/kushsharma/optimus-task-neo-executer:latest"
-    - "ghcr.io/kushsharma/optimus-task-neo-executer:{{ .Version }}"
-    dockerfile: ./task/neo/executer/Dockerfile
+    - "ghcr.io/kushsharma/optimus-task-neo-executor:latest"
+    - "ghcr.io/kushsharma/optimus-task-neo-executor:{{ .Version }}"
+    dockerfile: ./task/neo/executor/Dockerfile
     extra_files:
-    - task/neo/executer
+    - task/neo/executor
 
   # optional
-  -
-    goos: linux
-    goarch: amd64
-    image_templates:
-    - "ghcr.io/kushsharma/optimus-task-neo:latest"
-    - "ghcr.io/kushsharma/optimus-task-neo:{{ .Version }}"
-    dockerfile: ./task/neo/example.Dockerfile
-    extra_files:
-    - task/neo/example.entrypoint.sh
-    build_flag_templates:
-    - "--build-arg=OPTIMUS_RELEASE_URL=https://github.com/odpf/optimus/releases/download/v0.0.1-rc.2/optimus_0.0.1-rc.2_linux_x86_64.tar.gz"
+  # -
+  #   goos: linux
+  #   goarch: amd64
+  #   image_templates:
+  #   - "ghcr.io/kushsharma/optimus-task-neo:latest"
+  #   - "ghcr.io/kushsharma/optimus-task-neo:{{ .Version }}"
+  #   dockerfile: ./task/neo/example.Dockerfile
+  #   extra_files:
+  #   - task/neo/example.entrypoint.sh
+  #   build_flag_templates:
+  #   - "--build-arg=OPTIMUS_RELEASE_URL=https://github.com/odpf/optimus/releases/download/v0.0.1-rc.2/optimus_0.0.1-rc.2_linux_x86_64.tar.gz"
 
 brews:
   - name: optimus-plugins-kush
