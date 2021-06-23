@@ -3,8 +3,8 @@
 sleep 5
 
 # get resources
-echo "-- initializing opctl assets"
-OPTIMUS_ADMIN=1 /opt/opctl admin build instance "$JOB_NAME" --project \
+echo "-- initializing optimus assets"
+OPTIMUS_ADMIN=1 /opt/optimus admin build instance "$JOB_NAME" --project \
 "$PROJECT" --output-dir "$JOB_DIR" \
 --type "$INSTANCE_TYPE" --name "$INSTANCE_NAME" \
 --scheduled-at "$SCHEDULED_AT" --host "$OPTIMUS_HOSTNAME"

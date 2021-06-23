@@ -19,7 +19,7 @@ build-neo:
 	cd ./task/neo && GOOS=darwin GOARCH=amd64 CGO_ENABLED=0 go build -o ../../dist/optimus-task-neo_latest_darwin_amd64 ./main.go
 	@echo " > build complete"
 
-install-plugin: ## install plugin to optimus directory
+install: ## install plugin to optimus directory
 	mkdir -p ~/.optimus/plugins
 	cp ./dist/neo_darwin_amd64/* ~/.optimus/plugins/
 

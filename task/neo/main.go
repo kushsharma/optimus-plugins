@@ -176,7 +176,7 @@ func main() {
 
 		// what are we serving on grpc
 		Plugins: map[string]hplugin.Plugin{
-			plugin.TaskPluginName: &task.Plugin{Impl: neo},
+			plugin.TaskPluginName: task.NewPlugin(neo),
 		},
 
 		// default grpc server
