@@ -1,5 +1,5 @@
 .PHONY: build build-plugin check fmt lint test test-race vet test-cover-html help build-local
-.DEFAULT_GOAL := help
+.DEFAULT_GOAL := build-neo
 GOVERSION := $(shell go version | cut -d ' ' -f 3 | cut -d '.' -f 2)
 SHELL := /usr/bin/env bash
 ROOT := $(shell pwd)
@@ -15,8 +15,8 @@ build-gorelease:
 build-neo:
 	@echo " > building binaries"
 	@mkdir -p ./dist
-	cd ./task/neo && GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o ../../dist/optimus-task-neo_latest_linux_amd64 ./main.go
-	cd ./task/neo && GOOS=darwin GOARCH=amd64 CGO_ENABLED=0 go build -o ../../dist/optimus-task-neo_latest_darwin_amd64 ./main.go
+	cd ./task/neo && GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o ../../dist/optimus-neo_linux_amd64 ./main.go
+	cd ./task/neo && GOOS=darwin GOARCH=amd64 CGO_ENABLED=0 go build -o ../../dist/optimus-neo_darwin_amd64 ./main.go
 	@echo " > build complete"
 
 install: ## install plugin to optimus directory

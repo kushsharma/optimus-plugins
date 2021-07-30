@@ -4,43 +4,48 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 
-	"github.com/odpf/optimus/plugin"
-
+	"github.com/hashicorp/go-hclog"
 	"github.com/odpf/optimus/models"
-	"github.com/odpf/optimus/plugin/task"
-
-	hplugin "github.com/hashicorp/go-plugin"
+	"github.com/odpf/optimus/plugin"
+	"github.com/odpf/optimus/plugin/base"
 )
 
 var (
-	Name           = "neo"
-	DatetimeFormat = "2006-01-02"
+	Name = "neo"
 
 	// will be injected by build system
 	Version = "latest"
 	Image   = "ghcr.io/kushsharma/optimus-task-neo-executor"
+
+	_ models.CommandLineMod = &Neo{}
 )
 
-type Neo struct{}
+type Neo struct {
+	log hclog.Logger
+}
 
-// GetTaskSchema provides basic task details
-func (n *Neo) GetTaskSchema(ctx context.Context, req models.GetTaskSchemaRequest) (models.GetTaskSchemaResponse, error) {
-	return models.GetTaskSchemaResponse{
-		Name:        Name,
-		Description: "Near earth object tracker",
+// GetSchema provides basic task details
+func (n *Neo) PluginInfo() (*models.PluginInfoResponse, error) {
+	return &models.PluginInfoResponse{
+		Name:          Name,
+		Description:   "Near earth object tracker",
+		PluginType:    models.PluginTypeTask,
+		PluginMods:    []models.PluginMod{models.ModTypeCLI},
+		PluginVersion: Version,
+		APIVersion:    []string{strconv.Itoa(base.ProtocolVersion)},
 
 		// docker image that will be executed as the actual transformation task
 		Image: fmt.Sprintf("%s:%s", Image, Version),
-
 		// this is where the secret required by docker container will be mounted
 		SecretPath: "/tmp/key.json",
 	}, nil
 }
 
-// GetTaskQuestions provides questions asked via optimus cli when a new job spec
+// GetQuestions provides questions asked via optimus cli when a new job spec
 // is requested to be created
-func (n *Neo) GetTaskQuestions(ctx context.Context, req models.GetTaskQuestionsRequest) (models.GetTaskQuestionsResponse, error) {
+func (n *Neo) GetQuestions(ctx context.Context, req models.GetQuestionsRequest) (*models.GetQuestionsResponse, error) {
 	tQues := []models.PluginQuestion{
 		{
 			Name:   "Start",
@@ -53,14 +58,14 @@ func (n *Neo) GetTaskQuestions(ctx context.Context, req models.GetTaskQuestionsR
 			Help:   "YYYY-MM-DD format",
 		},
 	}
-	return models.GetTaskQuestionsResponse{
+	return &models.GetQuestionsResponse{
 		Questions: tQues,
 	}, nil
 }
 
-// ValidateTaskQuestion validate how stupid user is
-// Each question config in GetTaskQuestions will send a validation request
-func (n *Neo) ValidateTaskQuestion(ctx context.Context, req models.ValidateTaskQuestionRequest) (models.ValidateTaskQuestionResponse, error) {
+// ValidateQuestion validate how stupid user is
+// Each question config in GetQuestions will send a validation request
+func (n *Neo) ValidateQuestion(ctx context.Context, req models.ValidateQuestionRequest) (*models.ValidateQuestionResponse, error) {
 	var err error
 	switch req.Answer.Question.Name {
 	case "Start":
@@ -89,12 +94,12 @@ func (n *Neo) ValidateTaskQuestion(ctx context.Context, req models.ValidateTaskQ
 		}(req.Answer.Value)
 	}
 	if err != nil {
-		return models.ValidateTaskQuestionResponse{
+		return &models.ValidateQuestionResponse{
 			Success: false,
 			Error:   err.Error(),
 		}, nil
 	}
-	return models.ValidateTaskQuestionResponse{
+	return &models.ValidateQuestionResponse{
 		Success: true,
 	}, nil
 }
@@ -108,14 +113,16 @@ func findAnswerByName(name string, answers []models.PluginAnswer) (models.Plugin
 	return models.PluginAnswer{}, false
 }
 
-// DefaultTaskConfig are a set of key value pair which will be embedded in job
+// DefaultConfig are a set of key value pair which will be embedded in job
 // specification. These configs can be requested by the docker container before
 // execution
-func (n *Neo) DefaultTaskConfig(ctx context.Context, request models.DefaultTaskConfigRequest) (models.DefaultTaskConfigResponse, error) {
+// PluginConfig Value can contain valid go templates and they will be parsed at
+// runtime
+func (n *Neo) DefaultConfig(ctx context.Context, request models.DefaultConfigRequest) (*models.DefaultConfigResponse, error) {
 	start, _ := findAnswerByName("Start", request.Answers)
 	end, _ := findAnswerByName("End", request.Answers)
 
-	conf := []models.TaskPluginConfig{
+	conf := []models.PluginConfig{
 		{
 			Name:  "RANGE_START",
 			Value: start.Value,
@@ -125,61 +132,29 @@ func (n *Neo) DefaultTaskConfig(ctx context.Context, request models.DefaultTaskC
 			Value: end.Value,
 		},
 	}
-	return models.DefaultTaskConfigResponse{
+	return &models.DefaultConfigResponse{
 		Config: conf,
 	}, nil
 }
 
-// DefaultTaskAssets are a set of files which will be embedded in job
+// DefaultAssets are a set of files which will be embedded in job
 // specification in assets folder. These configs can be requested by the
 // docker container before execution.
-func (n *Neo) DefaultTaskAssets(ctx context.Context, _ models.DefaultTaskAssetsRequest) (models.DefaultTaskAssetsResponse, error) {
-	return models.DefaultTaskAssetsResponse{}, nil
+func (n *Neo) DefaultAssets(ctx context.Context, _ models.DefaultAssetsRequest) (*models.DefaultAssetsResponse, error) {
+	return &models.DefaultAssetsResponse{}, nil
 }
 
 // override the compilation behaviour of assets - if needed
-func (n *Neo) CompileTaskAssets(ctx context.Context, req models.CompileTaskAssetsRequest) (models.CompileTaskAssetsResponse, error) {
-	return models.CompileTaskAssetsResponse{
+func (n *Neo) CompileAssets(ctx context.Context, req models.CompileAssetsRequest) (*models.CompileAssetsResponse, error) {
+	return &models.CompileAssetsResponse{
 		Assets: req.Assets,
 	}, nil
 }
 
-// a task should ideally always have a destination, it could be endpoint, table, bucket, etc
-// in our case it is actually nothing
-func (n *Neo) GenerateTaskDestination(ctx context.Context, request models.GenerateTaskDestinationRequest) (models.GenerateTaskDestinationResponse, error) {
-	return models.GenerateTaskDestinationResponse{
-		Destination: "none",
-	}, nil
-}
-
-// as this task doesn't need dependency resolution, just leaving this empty
-func (n *Neo) GenerateTaskDependencies(ctx context.Context, request models.GenerateTaskDependenciesRequest) (response models.GenerateTaskDependenciesResponse, err error) {
-	return response, nil
-}
-
 func main() {
-	neo := &Neo{}
-
-	// start serving the plugin on a unix socket as a grpc server
-	hplugin.Serve(&hplugin.ServeConfig{
-
-		// this will be printed on stdout and will be piped to optimus core
-		HandshakeConfig: hplugin.HandshakeConfig{
-			// Need to be set as needed
-			ProtocolVersion: 1,
-
-			// Magic cookie key and value are just there to make sure you want to connect
-			// with optimus core, this is not authentication
-			MagicCookieKey:   plugin.MagicCookieKey,
-			MagicCookieValue: plugin.MagicCookieValue,
-		},
-
-		// what are we serving on grpc
-		Plugins: map[string]hplugin.Plugin{
-			plugin.TaskPluginName: task.NewPlugin(neo),
-		},
-
-		// default grpc server
-		GRPCServer: hplugin.DefaultGRPCServer,
+	plugin.Serve(func(log hclog.Logger) interface{} {
+		return &Neo{
+			log: log,
+		}
 	})
 }

@@ -6,7 +6,7 @@ builds:
   - dir: ./task/neo
     main: .
     id: "neo"
-    binary: "optimus-task-neo_{{.Version}}_{{.Os}}_{{.Arch}}"
+    binary: "optimus-neo_{{.Os}}_{{.Arch}}"
     ldflags:
       - -s -w -X main.Version={{.Version}} -X main.Image=ghcr.io/kushsharma/optimus-task-neo-executor
     goos:
