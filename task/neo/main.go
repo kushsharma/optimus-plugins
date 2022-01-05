@@ -9,7 +9,7 @@ import (
 	"github.com/hashicorp/go-hclog"
 	"github.com/odpf/optimus/models"
 	"github.com/odpf/optimus/plugin"
-	"github.com/odpf/optimus/plugin/base"
+	"github.com/odpf/optimus/plugin/v1beta1/base"
 )
 
 var (

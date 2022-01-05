@@ -52,7 +52,7 @@ def fetch_config_from_optimus():
     project_name = os.environ["PROJECT"]
     job_name = os.environ["JOB_NAME"]
 
-    r = requests.post(url="http://{}/api/v1/project/{}/job/{}/instance".format(optimus_host, project_name, job_name),
+    r = requests.post(url="http://{}/api/v1beta1/project/{}/job/{}/instance".format(optimus_host, project_name, job_name),
                       json={'scheduled_at': scheduled_at,
                             'instance_name': "neo",
                             'instance_type': "TASK"})
